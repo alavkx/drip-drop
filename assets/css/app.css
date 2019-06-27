@@ -1,5 +1,14 @@
 @import "./base.css";
 
+#text-banner {
+  margin: 0;
+  position: absolute;
+  font-size: 96px;
+  text-orientation: sideways;
+  writing-mode: vertical-rl;
+  line-height: 1.1;
+}
+
 .document-center {
   height: 100%;
   display: flex;

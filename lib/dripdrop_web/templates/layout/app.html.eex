@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <p id="text-banner">ACRNM <em>INFRANET</em> EXCLUSIVE</p>
     <main role="main" class="container">
       <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
       <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
