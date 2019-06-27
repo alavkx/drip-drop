@@ -1,3 +1,61 @@
-/* This file is for your main application css. */
+@import "./base.css";
 
-@import "./phoenix.css";
+.document-center {
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+label {
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 1px;
+  font-weight: 400;
+}
+
+em {
+  color: rgb(222, 255, 25);
+  font-style: normal;
+  font-weight: 700;
+}
+
+input {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: rgb(180, 180, 180);
+  border-radius: 1px;
+}
+
+input:focus {
+  border-color: #fff;
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+button {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  border: 1px solid rgb(222, 255, 25);
+  color: rgb(222, 255, 25);
+  border-radius: 1px;
+  margin-top: 8px;
+  padding: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 18px;
+  font-family: 'Roboto Mono', monospace;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+button:focus {
+  color: #fff;
+  border-color: rgb(222, 255, 25);
+  background-color: rgba(255, 255, 255, 0.02);
+  outline: none;
+}
