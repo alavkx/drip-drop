@@ -8,11 +8,26 @@
   margin: 0 auto;
 }
 
-label {
+form header, label {
   text-transform: uppercase;
   font-size: 13px;
   letter-spacing: 1px;
   font-weight: 400;
+}
+
+.input-container {
+  position: relative;
+  margin-top: 8px;
+}
+
+.input-container label {
+  font-size: 10px;
+  position: absolute;
+  right: 8px;
+  color: rgb(222, 255, 25);
+  background-color: #24292e;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 em {
@@ -28,6 +43,7 @@ input {
   background-color: rgba(255, 255, 255, 0.05);
   color: rgb(180, 180, 180);
   border-radius: 1px;
+  width: 100%;
 }
 
 input:focus {
@@ -48,7 +64,6 @@ button {
   font-weight: 700;
   letter-spacing: 1px;
   font-size: 18px;
-  font-family: 'Roboto Mono', monospace;
   text-transform: uppercase;
   cursor: pointer;
 }
