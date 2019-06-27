@@ -21,9 +21,13 @@
 
 form header, label {
   text-transform: uppercase;
-  font-size: 13px;
   letter-spacing: 1px;
   font-weight: 400;
+}
+
+form header {
+  text-align: right;
+  font-size: 13px;
 }
 
 .input-container {
@@ -34,7 +38,7 @@ form header, label {
 .input-container label {
   font-size: 10px;
   position: absolute;
-  right: 8px;
+  left: 8px;
   color: rgb(222, 255, 25);
   background-color: #24292e;
   padding: 0 8px;
