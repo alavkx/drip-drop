@@ -1,12 +1,14 @@
-<form style="width: 300px;" class="document-center">
-  <header class="form-label" aria-label="Acronym drop notification system">
-    <em>Acrnm</em> drop notification system
-  </header>
-  <div class="input-container">
-    <label for="email-input">
-      Email
-    </label>
-    <input aria-label="Email address" id="email-input"placeholder="anon@example.com" />
-  </div>
-  <button>Deploy spy</button>
-</form>
+<div class="document-center">
+  <form>
+    <header class="form-label" aria-label="Acronym drop notification system">
+      <em>Acrnm</em> drop notification system
+    </header>
+    <div class="input-container">
+      <label for="email-input">
+        Email
+      </label>
+      <input aria-label="Email address" id="email-input"placeholder="anon@example.com" />
+    </div>
+    <button>Deploy spy</button>
+  </form>
+</div>

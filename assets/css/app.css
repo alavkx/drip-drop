@@ -3,12 +3,36 @@
 #text-banner {
   margin: 0;
   position: absolute;
-  font-size: 96px;
+  font-size: 16vw;
   text-orientation: sideways;
   writing-mode: vertical-rl;
   line-height: 1.1;
   overflow: hidden;
-  top: 16px;
+  /* visibility: hidden; */
+}
+
+@media only screen and (min-width: 1024px) {
+  #text-banner {
+    visibility: visible;
+    font-size: 96px;
+  }
+  form {
+    max-width: 432px;
+    padding: 16px;
+  }
+}
+
+@media only screen and (min-width: 480px) {
+  #text-banner {
+    font-size: 10vw;
+  }
+}
+
+form {
+  padding: 16px;
+  width: 100%;
+  max-width: 340px;
+  background-color: rgba(36, 41, 46, 0.96);
 }
 
 .document-center {
@@ -16,7 +40,7 @@
   display: flex;
   flex-flow: column nowrap;
   justify-content: center;
-  margin: 0 auto;
+  align-items: center;
 }
 
 form header, label {
@@ -81,6 +105,7 @@ button {
   font-size: 18px;
   text-transform: uppercase;
   cursor: pointer;
+  width: 100%;
 }
 
 button:focus {
