@@ -1,6 +1,5 @@
 defmodule Dripdrop.CrawlSite do
   use Task
-  alias Dripdrop.Repo
 
   def start_link(_arg) do
     Task.start_link(&poll/0)
@@ -9,21 +8,51 @@ defmodule Dripdrop.CrawlSite do
   def poll() do
     receive do
     after
-      15_000 ->
+      5_000 ->
         diff_dom()
         poll()
     end
   end
 
-  defp diff_dom() do
+  def diff_dom() do
     :inets.start()
     :ssl.start()
 
-    case :httpc.request(
-           'https://supertalk.superfuture.com/topic/147967-the-acronym-community-sales-thread/'
-         ) do
-      {:ok, {_status, _headers, body}} -> body
-      {:error, reason} -> IO.puts(reason)
-    end
+    html =
+      case :httpc.request('https://acrnm.com/') do
+        {:ok, {_status, _headers, body}} ->
+          parse_product_links(body)
+          |> crawl_links
+
+        {:error, reason} ->
+          IO.puts(reason)
+      end
+  end
+
+  defp parse_product_links(html) do
+    html
+    |> Floki.parse()
+    |> Floki.find(".tile-list a")
+    |> Floki.attribute("href")
+    |> Enum.filter(fn url -> String.contains?(url, "products") end)
+  end
+
+  defp crawl_links(urls) do
+    urls
+    |> Enum.map(fn url ->
+      url
+      |> crawl_link("https://acrnm.com")
+      |> parse_product_info
+    end)
+  end
+
+  defp crawl_link(path, base) do
+    (base <> path)
+    |> to_charlist
+    |> :httpc.request()
+  end
+
+  defp parse_product_info(html) do
+    IO.inspect(html)
   end
 end
