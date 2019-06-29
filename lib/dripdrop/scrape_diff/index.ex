@@ -9,24 +9,25 @@ defmodule Dripdrop.CrawlSite do
     receive do
     after
       5_000 ->
-        diff_dom()
+        main()
         poll()
     end
   end
 
-  def diff_dom() do
-    :inets.start()
-    :ssl.start()
-
-    html =
-      case :httpc.request('https://acrnm.com/') do
-        {:ok, {_status, _headers, body}} ->
-          parse_product_links(body)
-          |> crawl_links
-
-        {:error, reason} ->
-          IO.puts(reason)
+  def main() do
+    body =
+      case Mojito.request(:get, "https://acrnm.com/") do
+        {:ok, %Mojito.Response{body: body}} -> body
+        {:error, reason} -> IO.puts(reason)
       end
+
+    body
+    |> parse_product_links
+    |> Enum.map(fn url ->
+      url
+      |> crawl_link("https://acrnm.com")
+      |> parse_product_info
+    end)
   end
 
   defp parse_product_links(html) do
@@ -37,28 +38,27 @@ defmodule Dripdrop.CrawlSite do
     |> Enum.filter(fn url -> String.contains?(url, "products") end)
   end
 
-  defp crawl_links(urls) do
-    urls
-    |> Enum.map(fn url ->
-      url
-      |> crawl_link("https://acrnm.com")
-      |> parse_product_info
-    end)
-  end
-
   defp crawl_link(path, base) do
-    (base <> path)
-    |> to_charlist
-    |> :httpc.request()
+    case Mojito.request(:get, base <> path) do
+      {:ok, %Mojito.Response{body: body}} -> {body, path}
+      {:error, reason} -> IO.puts(reason)
+    end
   end
 
-  defp parse_product_info(html) do
-    info =
-      html
-      |> Floki.parse()
-      |> Floki.find(".tile-list a")
-      |> Floki.attribute("href")
+  defp parse_product_info({body, path}) do
+    [name, technology_code, season] =
+      path
+      |> String.split(["products/", "-", "_"])
+      |> Enum.drop(1)
 
-    IO.inspect(info)
+    [description, type, generation, style, price] =
+      body
+      |> Floki.find(".product-details")
+      |> Floki.text()
+      |> String.split("Description")
+      |> Enum.at(0)
+      |> String.split(["Type", "Style", "Price", "Gen", "\n"], trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.filter(fn x -> String.length(x) > 0 end)
   end
 end
