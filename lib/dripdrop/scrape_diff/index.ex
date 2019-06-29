@@ -53,6 +53,12 @@ defmodule Dripdrop.CrawlSite do
   end
 
   defp parse_product_info(html) do
-    IO.inspect(html)
+    info =
+      html
+      |> Floki.parse()
+      |> Floki.find(".tile-list a")
+      |> Floki.attribute("href")
+
+    IO.inspect(info)
   end
 end
