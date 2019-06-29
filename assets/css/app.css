@@ -1,14 +1,13 @@
 @import "./base.css";
 
 #text-banner {
-  margin: 0;
   position: absolute;
   font-size: 16vw;
   text-orientation: sideways;
   writing-mode: vertical-rl;
+  margin: 16px 16px 0 0;
   line-height: 1.1;
   overflow: hidden;
-  /* visibility: hidden; */
 }
 
 @media only screen and (min-width: 1024px) {
@@ -63,6 +62,7 @@ form header {
   font-size: 10px;
   position: absolute;
   left: 8px;
+  top: 0; 
   color: rgb(222, 255, 25);
   background-color: #24292e;
   padding: 0 8px;

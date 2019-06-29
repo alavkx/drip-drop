@@ -16,7 +16,8 @@ defmodule DripdropWeb.Router do
   scope "/", DripdropWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    get "/", UserController, :new
+    post "/user", UserController, :create
   end
 
   # Other scopes may use custom stacks.

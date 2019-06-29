@@ -1,0 +1,17 @@
+<div class="document-center">
+  <%= form_for @changeset, Helpers.user_path(@conn, :create), fn f -> %>
+    <header class="form-label" aria-label="Acronym drop notification system">
+      <em>Acrnm</em> drop notification system
+    </header>
+    
+    <div class="input-container">
+      <%= email_input f, :email, placeholder: "anon@example.com", class: "form-control", id: "email-input", aria_label: "Email address" %>
+      <label for="email-input">
+        Email
+      </label>
+      <%= error_tag f, :email %>
+    </div>
+
+    <%= submit "Deploy spy" %>
+  <% end %>
+</div>
