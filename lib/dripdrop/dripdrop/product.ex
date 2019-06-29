@@ -6,12 +6,10 @@ defmodule Dripdrop.Product do
   schema "products" do
     field :description, :string
     field :generation, :string
-    field :model_number, :string
-    field :price, :integer
+    field :model_code, :string
+    field :price, :string
     field :season, :string
-    field :slot, :string
     field :style, :string
-    field :technology_code, :string
     field :type, :string
     has_many :skus, SKU
 
@@ -22,9 +20,7 @@ defmodule Dripdrop.Product do
   def changeset(product, attrs) do
     product
     |> cast(attrs, [
-      :slot,
-      :model_number,
-      :technology_code,
+      :model_code,
       :price,
       :season,
       :description,
@@ -33,9 +29,7 @@ defmodule Dripdrop.Product do
       :style
     ])
     |> validate_required([
-      :slot,
-      :model_number,
-      :technology_code,
+      :model_code,
       :price,
       :season,
       :description,
