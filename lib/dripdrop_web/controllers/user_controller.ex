@@ -3,7 +3,6 @@ defmodule DripdropWeb.UserController do
 
   alias Dripdrop.User
   alias Dripdrop.Repo
-  alias DripdropWeb.Router.Helpers
 
   def new(conn, _params) do
     changeset = User.changeset(%User{})
@@ -17,7 +16,7 @@ defmodule DripdropWeb.UserController do
       {:ok, _user} ->
         conn
         |> put_flash(:info, "Member added")
-        |> redirect(to: Helpers.user_path(conn, :new))
+        |> redirect(to: Routes.user_path(conn, :new))
 
       {:error, changeset} ->
         conn

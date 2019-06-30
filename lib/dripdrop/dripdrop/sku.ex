@@ -5,7 +5,7 @@ defmodule Dripdrop.SKU do
 
   schema "skus" do
     field :color, :string
-    field :in_stock, :boolean, default: false
+    field :in_stock, :boolean, default: true
     field :size, :string
     belongs_to :product, Product
 
