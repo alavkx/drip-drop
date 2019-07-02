@@ -1,6 +1,7 @@
 defmodule Dripdrop.CrawlSite do
   use Task
   use DripdropWeb, :controller
+  import Ecto.Query
 
   alias Dripdrop.Repo
   alias Dripdrop.Product
@@ -21,7 +22,7 @@ defmodule Dripdrop.CrawlSite do
 
   def main() do
     baseUrl = "https://acrnm.com"
-    IO.puts("Fetching html from: #{baseUrl}")
+    IO.puts("#{DateTime.utc_now()}- Fetching html from: #{baseUrl}")
 
     case Mojito.get(baseUrl) do
       {:ok, %{body: body}} ->
@@ -43,19 +44,19 @@ defmodule Dripdrop.CrawlSite do
     |> Floki.parse()
     |> Floki.find(".tile-list a")
     |> Floki.attribute("href")
-    |> Enum.filter(fn url -> String.contains?(url, "products") end)
+    |> Enum.filter(&String.contains?(&1, "products"))
   end
 
   def crawl_product(path, base) do
-    url = base <> path
-    IO.puts("Crawling page: #{url}")
+    IO.puts("Crawling page: #{path}")
 
-    case Mojito.get(url) do
+    case Mojito.get(base <> path) do
       {:ok, %{body: body}} ->
         {body, path}
         |> parse_product_info
         |> insert_or_get_product
         |> insert_or_update_skus
+        |> set_sku_out_of_stock
 
       {:error, reason} ->
         {:error, reason}
@@ -108,20 +109,34 @@ defmodule Dripdrop.CrawlSite do
     end
   end
 
-  defp insert_or_update_skus({{:ok, product}, skus}) do
-    skus
-    |> Enum.map(fn [color, size] ->
-      product
-      |> Ecto.build_assoc(:skus)
-      |> SKU.changeset(%{color: color, size: size})
-    end)
-    |> Enum.each(fn changeset ->
-      sku_msg = "#{product.model_code} SKU: #{changeset.changes.color}, #{changeset.changes.size}"
+  defp insert_or_get_sku([color, size], product) do
+    case Repo.get_by(SKU, color: color, size: size, product_id: product.id) do
+      nil ->
+        product
+        |> Ecto.build_assoc(:skus)
+        |> SKU.changeset(%{color: color, size: size})
+        |> Repo.insert!()
 
-      case Repo.insert(changeset) do
-        {:ok, _sku} -> IO.puts("Saved #{sku_msg}")
-        {:error, _changeset} -> IO.puts("Failed to save #{sku_msg}")
-      end
-    end)
+      sku ->
+        sku
+    end
+  end
+
+  defp insert_or_update_skus({{:ok, product}, skus}) do
+    sku_ids =
+      Enum.map(skus, fn sku ->
+        sku
+        |> insert_or_get_sku(product)
+        |> (fn sku -> sku.id end).()
+      end)
+
+    {product, sku_ids}
+  end
+
+  defp set_sku_out_of_stock({product, sku_ids}) do
+    out_of_stock_query =
+      from(s in SKU, where: s.product_id == ^product.id and not (s.id in ^sku_ids), select: s)
+
+    Repo.all(out_of_stock_query)
   end
 end
