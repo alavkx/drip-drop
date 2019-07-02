@@ -1,5 +1,5 @@
 <div class="document-center">
-  <%= form_for @changeset, Helpers.user_path(@conn, :create), fn f -> %>
+  <%= form_for @changeset, Routes.user_path(@conn, :create), fn f -> %>
     <header class="form-label" aria-label="Acronym drop notification system">
       <em>Acrnm</em> drop notification system
     </header>

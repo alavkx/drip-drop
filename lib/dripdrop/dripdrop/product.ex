@@ -37,5 +37,9 @@ defmodule Dripdrop.Product do
       :generation,
       :style
     ])
+    |> unique_constraint(:model_code,
+      name: :products_model_code_generation_season_id_index,
+      message: "Product model + generation + season combination already exists"
+    )
   end
 end

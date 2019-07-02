@@ -5,7 +5,7 @@ defmodule Dripdrop.SKU do
 
   schema "skus" do
     field :color, :string
-    field :in_stock, :boolean, default: false
+    field :in_stock, :boolean, default: true
     field :size, :string
     belongs_to :product, Product
 
@@ -13,9 +13,14 @@ defmodule Dripdrop.SKU do
   end
 
   @doc false
-  def changeset(sku, attrs) do
+  def changeset(sku, attrs \\ %{}) do
     sku
     |> cast(attrs, [:size, :color, :in_stock])
-    |> validate_required([:size, :color, :in_stock])
+    |> validate_required([:size, :color])
+    |> foreign_key_constraint(:product_id)
+    |> unique_constraint(:size,
+      name: :skus_size_color_product_id_index,
+      message: "Product model + generation + season combination already exists"
+    )
   end
 end
