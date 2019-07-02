@@ -55,8 +55,8 @@ defmodule Dripdrop.CrawlSite do
         {body, path}
         |> parse_product_info
         |> insert_or_get_product
-        |> insert_or_update_skus
-        |> set_sku_out_of_stock
+        |> insert_or_get_skus
+        |> update_missing_skus_not_in_stock
 
       {:error, reason} ->
         {:error, reason}
@@ -118,11 +118,11 @@ defmodule Dripdrop.CrawlSite do
         |> Repo.insert!()
 
       sku ->
-        sku
+        {:ok, sku}
     end
   end
 
-  defp insert_or_update_skus({{:ok, product}, skus}) do
+  defp insert_or_get_skus({{:ok, product}, skus}) do
     sku_ids =
       Enum.map(skus, fn sku ->
         sku
@@ -133,10 +133,11 @@ defmodule Dripdrop.CrawlSite do
     {product, sku_ids}
   end
 
-  defp set_sku_out_of_stock({product, sku_ids}) do
-    out_of_stock_query =
-      from(s in SKU, where: s.product_id == ^product.id and not (s.id in ^sku_ids), select: s)
-
-    Repo.all(out_of_stock_query)
+  defp update_missing_skus_not_in_stock({product, sku_ids}) do
+    from(s in SKU,
+      where: s.product_id == ^product.id and not (s.id in ^sku_ids),
+      select: s
+    )
+    |> Repo.update_all(set: [in_stock: false])
   end
 end
