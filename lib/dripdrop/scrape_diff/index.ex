@@ -121,13 +121,24 @@ defmodule Dripdrop.CrawlSite do
   defp insert_or_get_sku([color, size], product) do
     case Repo.get_by(SKU, color: color, size: size, product_id: product.id) do
       nil ->
-        product
-        |> Ecto.build_assoc(:skus)
-        |> SKU.changeset(%{color: color, size: size})
-        |> Repo.insert!()
+        insertResponse =
+          product
+          |> Ecto.build_assoc(:skus)
+          |> SKU.changeset(%{color: color, size: size})
+          |> Repo.insert()
+
+        {:new_sku, insertResponse}
+
+      %{in_stock: false} = sku ->
+        updateResponse =
+          sku
+          |> SKU.changeset(%{in_stock: true})
+          |> Repo.update()
+
+        {:restocked_sku, updateResponse}
 
       sku ->
-        {:ok, sku}
+        {:existing_sku, {:ok, sku}}
     end
   end
 
@@ -138,19 +149,19 @@ defmodule Dripdrop.CrawlSite do
   end
 
   defp update_missing_skus_not_in_stock({{product_type, product}, skus}) do
-    sku_ids = Enum.map(skus, fn {_, x} -> x.id end)
+    sku_ids = Enum.map(skus, fn {_, {_, x}} -> x.id end)
 
-    {_numEntries, restocked_skus} =
-      from(s in SKU,
-        where: s.product_id == ^product.id and not (s.id in ^sku_ids) and s.in_stock == true,
-        select: s
-      )
-      |> Repo.update_all(set: [in_stock: false])
+    from(s in SKU,
+      where: s.product_id == ^product.id and not (s.id in ^sku_ids) and s.in_stock == true,
+      select: s
+    )
+    |> Repo.update_all(set: [in_stock: false])
 
-    {{product_type, product}, restocked_skus}
+    {{product_type, product}, skus}
   end
 
-  defp build_stock_update_msg({{status, product}, restocked_skus}) do
+  defp build_stock_update_msg({{status, product}, skus}) do
+    restocked_skus = Enum.filter(skus, fn {status, {_, _}} -> status == :restocked_sku end)
     product_title = "#{product.model_code} #{product.generation}"
 
     product_msg =
@@ -165,7 +176,7 @@ defmodule Dripdrop.CrawlSite do
           nil
 
         false ->
-          Enum.map(restocked_skus, fn %{color: color, size: size} ->
+          Enum.map(restocked_skus, fn {_, {_, %{color: color, size: size}}} ->
             "#{product_title}: #{size} / #{color}"
           end)
       end
