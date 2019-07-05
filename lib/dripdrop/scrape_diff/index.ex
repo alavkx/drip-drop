@@ -24,18 +24,26 @@ defmodule Dripdrop.CrawlSite do
     baseUrl = "https://acrnm.com"
     IO.puts("#{DateTime.utc_now()}- Fetching html from: #{baseUrl}")
 
-    case Mojito.get(baseUrl) do
-      {:ok, %{body: body}} ->
-        body
-        |> parse_product_links
-        |> Task.async_stream(Dripdrop.CrawlSite, :crawl_product, [baseUrl],
-          max_concurrency: 10,
-          ordered: false
-        )
-        |> Enum.to_list()
+    {:ok, %{body: body}} = Mojito.get(baseUrl)
 
-      {:error, reason} ->
-        reason
+    [product_release_msg, sku_restock_msg] =
+      body
+      |> parse_product_links
+      |> Task.async_stream(Dripdrop.CrawlSite, :crawl_product, [baseUrl],
+        max_concurrency: 10,
+        ordered: false
+      )
+      |> Enum.map(fn {:ok, val} -> val end)
+      |> transpose
+      |> build_product_releases_msg
+      |> build_sku_restocks_msg
+
+    unless is_nil(product_release_msg) do
+      IO.puts(product_release_msg)
+    end
+
+    unless is_nil(sku_restock_msg) do
+      IO.puts(sku_restock_msg)
     end
   end
 
@@ -57,9 +65,10 @@ defmodule Dripdrop.CrawlSite do
         |> insert_or_get_product
         |> insert_or_get_skus
         |> update_missing_skus_not_in_stock
+        |> build_stock_update_msg
 
-      {:error, reason} ->
-        {:error, reason}
+      {:error, _reason} ->
+        {nil, nil}
     end
   end
 
@@ -72,7 +81,7 @@ defmodule Dripdrop.CrawlSite do
     skus =
       body
       |> Floki.find("#variety_id option")
-      |> Enum.map(fn x -> x |> Floki.text() |> String.split(" / ") end)
+      |> Enum.map(fn x -> Floki.text(x) |> String.split(" / ") end)
 
     [description, type, generation, style, price] =
       body
@@ -104,8 +113,8 @@ defmodule Dripdrop.CrawlSite do
            season: product_params.season,
            generation: product_params.generation
          ) do
-      nil -> {Repo.insert(changeset), skus}
-      product -> {{:ok, product}, skus}
+      nil -> {:new_product, Repo.insert(changeset), skus}
+      product -> {:existing_product, {:ok, product}, skus}
     end
   end
 
@@ -122,22 +131,78 @@ defmodule Dripdrop.CrawlSite do
     end
   end
 
-  defp insert_or_get_skus({{:ok, product}, skus}) do
-    sku_ids =
-      Enum.map(skus, fn sku ->
-        sku
-        |> insert_or_get_sku(product)
-        |> (fn sku -> sku.id end).()
-      end)
+  defp insert_or_get_skus({product_type, {:ok, product}, skus}) do
+    skus = Enum.map(skus, &insert_or_get_sku(&1, product))
 
-    {product, sku_ids}
+    {{product_type, product}, skus}
   end
 
-  defp update_missing_skus_not_in_stock({product, sku_ids}) do
-    from(s in SKU,
-      where: s.product_id == ^product.id and not (s.id in ^sku_ids),
-      select: s
-    )
-    |> Repo.update_all(set: [in_stock: false])
+  defp update_missing_skus_not_in_stock({{product_type, product}, skus}) do
+    sku_ids = Enum.map(skus, fn {_, x} -> x.id end)
+
+    {_numEntries, restocked_skus} =
+      from(s in SKU,
+        where: s.product_id == ^product.id and not (s.id in ^sku_ids) and s.in_stock == true,
+        select: s
+      )
+      |> Repo.update_all(set: [in_stock: false])
+
+    {{product_type, product}, restocked_skus}
+  end
+
+  defp build_stock_update_msg({{status, product}, restocked_skus}) do
+    product_title = "#{product.model_code} #{product.generation}"
+
+    product_msg =
+      case status do
+        :new_product -> product_title
+        :existing_product -> nil
+      end
+
+    sku_msgs =
+      case length(restocked_skus) == 0 do
+        true ->
+          nil
+
+        false ->
+          Enum.map(restocked_skus, fn %{color: color, size: size} ->
+            "#{product_title}: #{size} / #{color}"
+          end)
+      end
+
+    {product_msg, sku_msgs}
+  end
+
+  defp transpose(rows) do
+    rows
+    |> List.zip()
+    |> Enum.map(&Tuple.to_list/1)
+  end
+
+  defp build_product_releases_msg([product_msgs, sku_msgs]) do
+    product_msgs = Enum.reject(product_msgs, &is_nil/1)
+
+    release_msg =
+      case length(product_msgs) == 0 do
+        true ->
+          nil
+
+        false ->
+          "New products detected\n" <> Enum.join(product_msgs, " / ")
+      end
+
+    [release_msg, sku_msgs]
+  end
+
+  defp build_sku_restocks_msg([release_msg, sku_msgs]) do
+    sku_msgs = Enum.reject(sku_msgs, &is_nil/1)
+
+    restock_msg =
+      case length(sku_msgs) == 0 do
+        true -> nil
+        false -> "Restock detected\n" <> Enum.join(sku_msgs, " / ")
+      end
+
+    [release_msg, restock_msg]
   end
 end
