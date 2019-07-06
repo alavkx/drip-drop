@@ -15,7 +15,6 @@ defmodule Dripdrop.CrawlSite do
     receive do
     after
       120_000 ->
-        main()
         poll()
     end
   end
@@ -162,7 +161,7 @@ defmodule Dripdrop.CrawlSite do
 
   defp build_stock_update_msg({{status, product}, skus}) do
     restocked_skus = Enum.filter(skus, fn {status, {_, _}} -> status == :restocked_sku end)
-    product_title = "#{product.model_code} #{product.generation}"
+    product_title = "#{product.model_code} Gen. #{product.generation}"
 
     product_msg =
       case status do
