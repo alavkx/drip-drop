@@ -165,11 +165,13 @@ defmodule Dripdrop.CrawlSite do
         sku_type == :restocked_sku || (product_type == :existing_product && sku_type == :new_sku)
       end)
 
-    product_title = "#{product.model_code} Gen. #{product.generation}"
+    product_url = "https://acrnm.com/products/#{product.model_code}_#{product.season}"
+
+    product_link = "[#{product.model_code}](#{product_url})"
 
     product_msg =
       case product_type do
-        :new_product -> product_title
+        :new_product -> product_link
         :existing_product -> nil
       end
 
@@ -180,7 +182,7 @@ defmodule Dripdrop.CrawlSite do
 
         false ->
           Enum.map(restocked_skus, fn {_, {_, %{color: color, size: size}}} ->
-            "#{product_title}: #{size} / #{color}"
+            "#{product_link}: #{size} / #{color}"
           end)
       end
 
@@ -202,7 +204,7 @@ defmodule Dripdrop.CrawlSite do
           nil
 
         false ->
-          "New products detected\n" <> Enum.join(product_msgs, " / ")
+          "Product drop detected\n" <> Enum.join(product_msgs, " / ")
       end
 
     [release_msg, sku_msgs]
@@ -224,14 +226,12 @@ defmodule Dripdrop.CrawlSite do
     base = "https://discordapp.com/api"
 
     hook =
-      "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
-
-    json = Jason.encode!(%{"content" => msg})
+      "/webhooks/597072817544101892/W7edvrXrrYcYgPakgGmgAdkYJLUYOo_vAhTuadlDz0o4lBJ8KdaILAbc0SEiDUkB61_j"
 
     Mojito.post(
       base <> hook,
       [{"content-type", "application/json"}],
-      json
+      Jason.encode!(%{"content" => msg})
     )
   end
 end
