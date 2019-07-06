@@ -159,12 +159,16 @@ defmodule Dripdrop.CrawlSite do
     {{product_type, product}, skus}
   end
 
-  defp build_stock_update_msg({{status, product}, skus}) do
-    restocked_skus = Enum.filter(skus, fn {status, {_, _}} -> status == :restocked_sku end)
+  defp build_stock_update_msg({{product_type, product}, skus}) do
+    restocked_skus =
+      Enum.filter(skus, fn {sku_type, {_, _}} ->
+        sku_type == :restocked_sku || (product_type == :existing_product && sku_type == :new_sku)
+      end)
+
     product_title = "#{product.model_code} Gen. #{product.generation}"
 
     product_msg =
-      case status do
+      case product_type do
         :new_product -> product_title
         :existing_product -> nil
       end
