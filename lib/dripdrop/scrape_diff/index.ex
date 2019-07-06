@@ -39,11 +39,11 @@ defmodule Dripdrop.CrawlSite do
       |> build_sku_restocks_msg
 
     unless is_nil(product_release_msg) do
-      IO.puts(product_release_msg)
+      post_discord_message(product_release_msg)
     end
 
     unless is_nil(sku_restock_msg) do
-      IO.puts(sku_restock_msg)
+      post_discord_message(sku_restock_msg)
     end
   end
 
@@ -215,5 +215,20 @@ defmodule Dripdrop.CrawlSite do
       end
 
     [release_msg, restock_msg]
+  end
+
+  defp post_discord_message(msg) do
+    base = "https://discordapp.com/api"
+
+    hook =
+      "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
+
+    json = Jason.encode!(%{"content" => msg})
+
+    Mojito.post(
+      base <> hook,
+      [{"content-type", "application/json"}],
+      json
+    )
   end
 end
