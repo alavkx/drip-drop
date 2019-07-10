@@ -176,14 +176,12 @@ defmodule Dripdrop.CrawlSite do
       end
 
     sku_msgs =
-      case length(restocked_skus) == 0 do
-        true ->
-          nil
-
-        false ->
-          Enum.map(restocked_skus, fn {_, {_, %{color: color, size: size}}} ->
-            "#{product_link}: #{size} / #{color}"
-          end)
+      if length(restocked_skus) == 0 do
+        nil
+      else 
+        Enum.map(restocked_skus, fn {_, {_, %{color: color, size: size}}} ->
+          "#{product_link}: #{size} / #{color}"
+        end)
       end
 
     {product_msg, sku_msgs}
@@ -197,15 +195,8 @@ defmodule Dripdrop.CrawlSite do
 
   defp build_product_releases_msg([product_msgs, sku_msgs]) do
     product_msgs = Enum.reject(product_msgs, &is_nil/1)
-
-    release_msg =
-      case length(product_msgs) == 0 do
-        true ->
-          nil
-
-        false ->
-          "Product drop detected\n" <> Enum.join(product_msgs, " / ")
-      end
+    msg = "Product drop detected\n" <> Enum.join(product_msgs, " / ")
+    release_msg = if length(product_msgs) == 0, do: nil, else: msg
 
     [release_msg, sku_msgs]
   end
