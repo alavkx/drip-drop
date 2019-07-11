@@ -21,7 +21,7 @@ defmodule Dripdrop.CrawlSite do
 
   def main() do
     baseUrl = "https://acrnm.com"
-    IO.puts("#{DateTime.utc_now()}- Fetching html from: #{baseUrl}")
+    IO.puts("#{DateTime.utc_now()} - Fetching html from #{baseUrl}")
 
     {:ok, %{body: body}} = Mojito.get(baseUrl)
 
@@ -44,6 +44,8 @@ defmodule Dripdrop.CrawlSite do
     unless is_nil(sku_restock_msg) do
       post_discord_message(sku_restock_msg)
     end
+
+    IO.puts("#{DateTime.utc_now()} - Finished crawling #{baseUrl}")
   end
 
   defp parse_product_links(html) do
@@ -159,6 +161,8 @@ defmodule Dripdrop.CrawlSite do
     {{product_type, product}, skus}
   end
 
+  defp fmt_sku_display_name(s) do "#{s.size} / #{s.color}" end
+
   defp build_stock_update_msg({{product_type, product}, skus}) do
     restocked_skus =
       Enum.filter(skus, fn {sku_type, {_, _}} ->
@@ -170,21 +174,25 @@ defmodule Dripdrop.CrawlSite do
     product_link = "[#{product.model_code}](#{product_url})"
 
     product_msg =
-      case product_type do
-        :new_product -> product_link
-        :existing_product -> nil
+      if product_type == :new_product do
+        product_link
       end
 
-    sku_msgs =
-      if length(restocked_skus) == 0 do
-        nil
-      else 
-        Enum.map(restocked_skus, fn {_, {_, %{color: color, size: size}}} ->
-          "#{product_link}: #{size} / #{color}"
-        end)
+    restocked_skus_msg =
+      if length(restocked_skus) > 0 do
+        msg = restocked_skus
+        |> Enum.map(fn {_, {_, s}} -> fmt_sku_display_name(s) end)
+        |> Enum.join(", ")
+
+        "#{product_link}: " <> msg
       end
 
-    {product_msg, sku_msgs}
+    IO.puts("\t#{product.model_code}")
+    Enum.each(skus, fn {sku_type, {_, sku}} ->
+      IO.puts("\t\t#{sku_type} -> #{fmt_sku_display_name(sku)} / id#{sku.id}")
+    end)
+
+    {product_msg, restocked_skus_msg}
   end
 
   defp transpose(rows) do
@@ -196,7 +204,7 @@ defmodule Dripdrop.CrawlSite do
   defp build_product_releases_msg([product_msgs, sku_msgs]) do
     product_msgs = Enum.reject(product_msgs, &is_nil/1)
     msg = "Product drop detected\n" <> Enum.join(product_msgs, " / ")
-    release_msg = if length(product_msgs) == 0, do: nil, else: msg
+    release_msg = if length(product_msgs) > 0 do msg end
 
     [release_msg, sku_msgs]
   end
@@ -205,9 +213,8 @@ defmodule Dripdrop.CrawlSite do
     sku_msgs = Enum.reject(sku_msgs, &is_nil/1)
 
     restock_msg =
-      case length(sku_msgs) == 0 do
-        true -> nil
-        false -> "Restock detected\n" <> Enum.join(sku_msgs, " / ")
+      if length(sku_msgs) > 0 do
+        "Restock detected\n" <> Enum.join(sku_msgs, "\n")
       end
 
     [release_msg, restock_msg]
