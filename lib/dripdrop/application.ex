@@ -10,7 +10,7 @@ defmodule Dripdrop.Application do
       Dripdrop.CrawlSite
     ]
 
-    opts = [strategy: :one_for_one, name: Dripdrop.Supervisor]
+    opts = [strategy: :one_for_one, name: Dripdrop.Supervisor, restart: :permanent]
     Supervisor.start_link(children, opts)
   end
 
