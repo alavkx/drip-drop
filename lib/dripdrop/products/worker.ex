@@ -1,4 +1,4 @@
-defmodule Dripdrop.CrawlSite do
+defmodule Dripdrop.Crawl do
   use GenServer
   use Task
   use DripdropWeb, :controller
@@ -8,40 +8,33 @@ defmodule Dripdrop.CrawlSite do
   alias Dripdrop.Product
   alias Dripdrop.SKU
 
-  @name DW
-  
-  # Client API
+  @doc """
+  Starts the registry.
+  """
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, opts ++ [name: DW])
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
-
-  # Server Callbacks
-  def init() do
   
+  @impl true
+  def init(:ok) do
+    {:ok, %{}, 0} # Initial timeout of 0 to trigger immediately
   end
 
-  def handle_call() do
-    
-  end
-
-  def handle_cast() do
-    
-  end
-
-  def poll() do
-    main()
-
-    receive do
-    after
-      120_000 ->
-        poll()
+  @poll_period :timer.minutes(2)
+  @impl true
+  def handle_info(:timeout, state) do
+    try do
+      main()
+    rescue
+      err ->
+        IO.warn("It crashed, my dude.", err)
     end
+    {:noreply, state, @poll_period}
   end
 
-  def main() do  
+  def main() do
     baseUrl = "https://acrnm.com"
     IO.puts("#{DateTime.utc_now()} - Fetching html from #{baseUrl}")
-    # 1st process
     {:ok, %{body: body}} = Mojito.get(baseUrl)
     [product_release_msg, sku_restock_msg] =
       body
@@ -49,8 +42,7 @@ defmodule Dripdrop.CrawlSite do
       |> Floki.find(".tile-list a")
       |> Floki.attribute("href")
       |> Enum.filter(&String.contains?(&1, "products"))
-      # N processes
-      |> Task.async_stream(Dripdrop.CrawlSite, :crawl_product, [baseUrl],
+      |> Task.async_stream(__MODULE__, :crawl_product, [baseUrl],
         max_concurrency: 10,
         ordered: false
       )
@@ -192,7 +184,7 @@ defmodule Dripdrop.CrawlSite do
 
   defp build_product_releases_msg([product_msgs, sku_msgs]) do
     product_msgs = Enum.reject(product_msgs, &is_nil/1)
-    msg = "Product drop detected\n" <> Enum.join(product_msgs, " / ")
+    msg = "Drop detected\n" <> Enum.join(product_msgs, " / ")
     release_msg = if length(product_msgs) > 0 do msg end
     [release_msg, sku_msgs]
   end

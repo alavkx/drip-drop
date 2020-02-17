@@ -7,7 +7,7 @@ defmodule Dripdrop.Application do
     children = [
       Dripdrop.Repo,
       DripdropWeb.Endpoint,
-      Dripdrop.CrawlSite
+      Dripdrop.Crawl
     ]
 
     opts = [strategy: :one_for_one, name: Dripdrop.Supervisor, restart: :permanent]
