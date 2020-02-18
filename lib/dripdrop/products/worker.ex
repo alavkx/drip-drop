@@ -60,7 +60,6 @@ defmodule Dripdrop.Crawl do
   end
 
   def crawl_product(path, base) do
-    IO.puts("Crawling page: #{path}")
     case Mojito.get(base <> path) do
       {:ok, %{body: body}} ->
         {body, path}
@@ -199,14 +198,13 @@ defmodule Dripdrop.Crawl do
   end
 
   defp post_discord_message(msg) do
-    base = "https://discordapp.com/api"
-    subneet_prod_hook =
-      "/webhooks/597072817544101892/W7edvrXrrYcYgPakgGmgAdkYJLUYOo_vAhTuadlDz0o4lBJ8KdaILAbc0SEiDUkB61_j"
-    f1_dev_hook = 
-      "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
-    hook = if Mix.env == :prod, do: subneet_prod_hook, else: f1_dev_hook
+    path = if Mix.env == :prod do
+        "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
+      else
+        "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
+    end
     Mojito.post(
-      base <> hook,
+      "https://discordapp.com/api" <> path,
       [{"content-type", "application/json"}],
       Jason.encode!(%{"content" => msg})
     )
