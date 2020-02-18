@@ -2,7 +2,7 @@
 
 #text-banner {
   position: absolute;
-  font-size: 16vw;
+  font-size: 32px;
   text-orientation: sideways;
   writing-mode: vertical-rl;
   margin: 16px 16px 0 0;
@@ -13,7 +13,7 @@
 @media only screen and (min-width: 1024px) {
   #text-banner {
     visibility: visible;
-    font-size: 96px;
+    font-size: 128px;
   }
   form {
     max-width: 432px;
@@ -23,7 +23,7 @@
 
 @media only screen and (min-width: 480px) {
   #text-banner {
-    font-size: 10vw;
+    font-size: 64px;
   }
 }
 
@@ -42,7 +42,8 @@ form {
   align-items: center;
 }
 
-form header, label {
+form header,
+label {
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 400;
@@ -62,7 +63,7 @@ form header {
   font-size: 10px;
   position: absolute;
   left: 8px;
-  top: 0; 
+  top: 0;
   color: rgb(222, 255, 25);
   background-color: #24292e;
   padding: 0 8px;
