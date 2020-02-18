@@ -26,8 +26,7 @@ defmodule Dripdrop.Crawl do
     try do
       main()
     rescue
-      err ->
-        IO.warn("It crashed, my dude.", err)
+      e in RuntimeError -> e
     end
     {:noreply, state, @poll_period}
   end
