@@ -1,0 +1,18 @@
+<div class="document-center">
+  <table>
+    <thead>
+      <th>Model</th>
+      <th>Price</th>
+      <th>Description</th>
+    </thead>
+    <tbody>
+    <%= Enum.map @products, fn p -> %>
+      <tr>
+        <td><%= "#{p.model_code} v#{p.generation}" %></td>
+        <td><%= p.price %></td>
+        <td><%= p.description %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
