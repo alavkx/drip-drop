@@ -26,7 +26,7 @@ defmodule Dripdrop.Crawl do
     try do
       main()
     rescue
-      e in RuntimeError -> e
+      e in RuntimeError -> IO.puts("An error occurred: " <> e.message)
     end
     {:noreply, state, @poll_period}
   end
