@@ -1,33 +1,22 @@
 defmodule Dripdrop.Crawl do
   use GenServer
-  use Task
-  use DripdropWeb, :controller
   import Ecto.Query
 
   alias Dripdrop.Repo
   alias Dripdrop.Product
   alias Dripdrop.SKU
-
-  @doc """
-  Starts the registry.
-  """
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+  
+  def start_link() do
+    GenServer.start_link(__MODULE__, %{})
   end
   
-  @impl true
-  def init(:ok) do
-    {:ok, %{}, 0} # Initial timeout of 0 to trigger immediately
+  def init(state) do
+    {:ok, state, 0} # Initial timeout of 0 to trigger immediately
   end
 
   @poll_period :timer.minutes(2)
-  @impl true
   def handle_info(:timeout, state) do
-    try do
-      main()
-    rescue
-      e -> IO.puts("An error occurred: " <> e.message)
-    end
+    main()
     {:noreply, state, @poll_period}
   end
 
