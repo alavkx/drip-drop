@@ -6,18 +6,25 @@ defmodule Dripdrop.Crawl do
   alias Dripdrop.Product
   alias Dripdrop.SKU
   
-  def start_link(_args) do
+  def start_link(_) do
     GenServer.start_link(__MODULE__, %{})
   end
   
+  @impl true
   def init(state) do
-    {:ok, state, 0} # Initial timeout of 0 to trigger immediately
+    schedule_work()
+    {:ok, state}
   end
 
-  @poll_period :timer.minutes(2)
-  def handle_info(:timeout, state) do
+  @impl true
+  def handle_info(:work, state) do
     main()
-    {:noreply, state, @poll_period}
+    schedule_work()
+    {:noreply, state}
+  end
+
+  defp schedule_work do
+    Process.send_after(self(), :work, 120_000)
   end
 
   def main() do
