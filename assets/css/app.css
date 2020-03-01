@@ -1,5 +1,25 @@
-@import "./reset.css";
-@import "./base.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*:after,
+*:before {
+  box-sizing: inherit;
+  font-family: "Roboto Mono", monospace;
+}
+html {
+  box-sizing: border-box;
+  font-size: 62.5%;
+}
+body {
+  color: #fff;
+  background-color: rgba(36, 41, 46, 1);
+  font-size: 1.6em;
+  font-weight: 300;
+  line-height: 1.6;
+  margin: 0;
+}
 
 #text-banner {
   position: absolute;
@@ -9,17 +29,6 @@
   margin: 16px 16px 0 0;
   line-height: 1.1;
   overflow: hidden;
-}
-
-@media only screen and (min-width: 1024px) {
-  #text-banner {
-    visibility: visible;
-    font-size: 128px;
-  }
-  form {
-    max-width: 432px;
-    padding: 16px;
-  }
 }
 
 @media only screen and (min-width: 480px) {
@@ -33,14 +42,6 @@ form {
   width: 100%;
   max-width: 340px;
   background-color: rgba(36, 41, 46, 0.96);
-}
-
-.document-center {
-  height: 100%;
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
 }
 
 form header,
