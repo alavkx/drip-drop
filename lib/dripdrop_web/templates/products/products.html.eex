@@ -1,18 +1,11 @@
-<div class="document-center">
-  <table>
-    <thead>
-      <th>Model</th>
-      <th>Price</th>
-      <th>Description</th>
-    </thead>
-    <tbody>
-    <%= Enum.map @products, fn p -> %>
-      <tr>
-        <td><%= "#{p.model_code} v#{p.generation}" %></td>
-        <td><%= p.price %></td>
-        <td><%= p.description %></td>
-      </tr>
-    <% end %>
-    </tbody>
-  </table>
-</div>
+<ul class="flex flex-col pt-8">
+<%= Enum.map @products, fn p -> %>
+  <li class="border border-gray-800 mb-16 relative">
+    <header class="px-4 py-2 border border-gray-800 absolute -top-8 left-24px bgc-red" style="top: -24px; left: 16px; color: rgb(222, 255, 25); z-index: 1; background-color: #24292e;"><%= "#{p.model_code}" %></header>
+      <div class="absolute text-sm" style="right: 16px; top: 8px;"><%= "v#{p.generation} • #{p.price}" %></div>
+    <div class="px-8 py-8">
+      <div><%= p.description %></div>
+    </div>
+  </li>
+<% end %>
+</ul>

@@ -1,15 +1,13 @@
-<div class="document-center">
-  <%= form_for @changeset, Routes.user_path(@conn, :create), fn f -> %>
-    <header class="form-label">
-      <em>Acrnm</em> drop notification system
-    </header>
-    <div class="input-container">
-      <%= email_input f, :email, placeholder: "anon@example.com", class: "form-control", id: "email-input", aria_label: "Email address" %>
-      <label for="email-input">
-        Email
-      </label>
-      <%= error_tag f, :email %>
-    </div>
-    <%= submit "Deploy spy" %>
-  <% end %>
-</div>
+<%= form_for @changeset, Routes.user_path(@conn, :create), [class: "mx-auto"], fn f -> %>
+  <header class="form-label">
+    <em>Acrnm</em> drop notification system
+  </header>
+  <div class="input-container">
+    <%= email_input f, :email, placeholder: "anon@example.com", class: "form-control", id: "email-input", aria_label: "Email address" %>
+    <label for="email-input">
+      Email
+    </label>
+    <%= error_tag f, :email %>
+  </div>
+  <%= submit "Deploy spy" %>
+<% end %>
