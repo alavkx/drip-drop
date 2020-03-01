@@ -16,8 +16,8 @@ defmodule DripdropWeb.Router do
   scope "/", DripdropWeb do
     pipe_through :browser
 
-    get "/", UserController, :new
-    get "/products", ProductsController, :new
+    get "/", UserController, :render
+    get "/products", ProductsController, :render
     post "/user", UserController, :create
   end
 

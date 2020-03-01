@@ -4,9 +4,9 @@ defmodule DripdropWeb.UserController do
   alias Dripdrop.User
   alias Dripdrop.Repo
 
-  def new(conn, _params) do
+  def render(conn, _params) do
     changeset = User.changeset(%User{})
-    render(conn, "new.html", changeset: changeset)
+    render(conn, "user.html", changeset: changeset)
   end
 
   def create(conn, %{"user" => user}) do
@@ -21,7 +21,7 @@ defmodule DripdropWeb.UserController do
       {:error, changeset} ->
         conn
         |> put_flash(:error, "Failed to add member")
-        |> render("new.html", changeset: changeset)
+        |> render("user.html", changeset: changeset)
     end
   end
 
