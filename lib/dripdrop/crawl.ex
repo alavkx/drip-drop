@@ -73,18 +73,14 @@ defmodule Dripdrop.Crawl do
   end
 
   def crawl_product(path, base) do
-    case Mojito.get(base <> path) do
-      {:ok, %{body: body}} ->
-        {body, path}
-        |> parse_product_info
-        |> get_or_insert_product
-        |> get_or_insert_skus
-        |> update_missing_skus_not_in_stock
-        |> build_stock_update_msg
+    {:ok, %{body: body}} = Mojito.get(base <> path)
 
-      {:error, _reason} ->
-        {nil, nil}
-    end
+    {body, path}
+    |> parse_product_info
+    |> get_or_insert_product
+    |> get_or_insert_skus
+    |> update_missing_skus_not_in_stock
+    |> build_stock_update_msg
   end
 
   defp parse_product_info({body, path}) do
