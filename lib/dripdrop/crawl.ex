@@ -26,15 +26,8 @@ defmodule Dripdrop.Crawl do
 
   @impl true
   def handle_cast({:post_message, msg}, state) do
-    path =
-      if Mix.env() == :prod do
-        "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
-      else
-        "/webhooks/596870533354618880/1nsxCaDC-d9D1w_76aEWbZIACgj-n-B-N_iDbXqzLK5MWuiumJ4-IHNeD0BbsaIIe3wL"
-      end
-
     Mojito.post(
-      "https://discordapp.com/api" <> path,
+      "https://discordapp.com/api" <> Application.get_env(:dripdrop, :webhook),
       [{"content-type", "application/json"}],
       Jason.encode!(%{"content" => msg})
     )

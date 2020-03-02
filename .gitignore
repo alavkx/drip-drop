@@ -35,3 +35,5 @@ npm-debug.log
 
 # Files created by language server
 /.elixir_ls/
+
+**/*.secret.exs
