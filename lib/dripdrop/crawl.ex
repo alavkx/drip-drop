@@ -85,7 +85,7 @@ defmodule Dripdrop.Crawl do
       |> Floki.find("#variety_id option")
       |> Enum.map(fn x -> Floki.text(x) |> String.split(" / ") end)
 
-    [description, type, generation, style, price] =
+    [description, type, generation, style, status_string] =
       body
       |> Floki.find(".product-details")
       |> Floki.text()
@@ -95,7 +95,14 @@ defmodule Dripdrop.Crawl do
       |> Enum.map(&String.trim/1)
       |> Enum.filter(fn x -> String.length(x) > 0 end)
 
-    {skus,
+    {status, price} =
+      case status_string do
+        "Coming soon" -> {:coming_soon, nil}
+        "Sold out" -> {:sold_out, nil}
+        price -> {:available, price}
+      end
+
+    {skus, status,
      %{
        model_code: model_code,
        season: season,
@@ -107,17 +114,58 @@ defmodule Dripdrop.Crawl do
      }}
   end
 
-  defp get_or_insert_product({skus, product_params}) do
-    changeset = Product.changeset(%Product{}, product_params)
+  defp get_or_insert_product({skus, status, changeset_params}) do
+    db_product =
+      Repo.get_by(Product,
+        model_code: changeset_params.model_code,
+        season: changeset_params.season,
+        generation: changeset_params.generation
+      )
 
-    case Repo.get_by(Product,
-           model_code: product_params.model_code,
-           season: product_params.season,
-           generation: product_params.generation
-         ) do
-      nil -> {:new_product, Repo.insert(changeset), skus}
-      product -> {:existing_product, {:ok, product}, skus}
-    end
+    # Price should only ever change from nil -> value; the price column is used for historical reference, not state
+    # -------
+    # To view in stock products, join on the SKU instead
+    # ```sql
+    #   select distinct model_code
+    #   from products
+    #   join skus
+    #     on products.id = skus.product_id
+    #   where in_stock;
+    # ```
+    # -------
+    # We need to determine the type of event based on the product we have—
+    # in the db (state) and the latest representation on the website (action)
+    event =
+      case {status, db_product} do
+        {:coming_soon, nil} -> :product_announced
+        {:coming_soon, _} -> :noop
+        {:available, nil} -> :unannounced_product_stocked
+        {:available, %Product{price: nil}} -> :announced_product_stocked
+        {:available, _} -> :noop
+        {:sold_out, _} -> :noop
+      end
+
+    response =
+      case event do
+        e
+        when e in [
+               :product_announced,
+               :unannounced_product_stocked,
+               :announced_product_stocked
+             ] ->
+          %Product{} |> Product.changeset(changeset_params) |> Repo.insert_or_update()
+
+        :noop ->
+          {:ok, db_product}
+      end
+
+    product_type =
+      case db_product do
+        nil -> :new_product
+        _ -> :existing_product
+      end
+
+    {product_type, response, skus}
   end
 
   defp insert_or_get_sku([color, size], product) do
@@ -144,10 +192,10 @@ defmodule Dripdrop.Crawl do
 
   defp get_or_insert_skus({product_type, {:ok, product}, skus}) do
     skus = Enum.map(skus, &insert_or_get_sku(&1, product))
-    {{product_type, product}, skus}
+    {product_type, product, skus}
   end
 
-  defp update_missing_skus_not_in_stock({{product_type, product}, skus}) do
+  defp update_missing_skus_not_in_stock({product_type, product, skus}) do
     sku_ids = Enum.map(skus, fn {_, {_, x}} -> x.id end)
 
     from(s in SKU,
@@ -156,16 +204,16 @@ defmodule Dripdrop.Crawl do
     )
     |> Repo.update_all(set: [in_stock: false])
 
-    {{product_type, product}, skus}
+    {product_type, product, skus}
   end
 
   defp fmt_sku_display_name(s) do
     "#{s.size} / #{s.color}"
   end
 
-  defp build_stock_update_msg({{product_type, product}, skus}) do
+  defp build_stock_update_msg({product_type, product, skus}) do
     restocked_skus =
-      Enum.filter(skus, fn {sku_type, {_, _}} ->
+      Enum.filter(skus, fn {sku_type, _} ->
         sku_type == :restocked_sku || (product_type == :existing_product && sku_type == :new_sku)
       end)
 

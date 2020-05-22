@@ -15,3 +15,7 @@ config :dripdrop, Dripdrop.Repo,
   ssl: true,
   # Free tier db only allows 4 connections. Rolling deploys need pool_size*(n+1) connections.
   pool_size: 2
+
+config :dripdrop,
+       :webhook,
+       "${WEBHOOK}"
