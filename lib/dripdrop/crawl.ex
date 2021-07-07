@@ -12,23 +12,40 @@ defmodule Dripdrop.Crawl do
 
   @impl true
   def init(state) do
-    main()
+    run()
     schedule_work()
     {:ok, state}
   end
 
   @impl true
   def handle_info(:work, state) do
-    main()
+    run()
     schedule_work()
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:post_message, msg}, state) do
+    Mojito.post(
+      "https://discordapp.com/api" <> Application.get_env(:dripdrop, :webhook),
+      [{"content-type", "application/json"}],
+      Jason.encode!(%{"content" => msg})
+    )
+
+    {:noreply, state}
+  end
+
+  defp post_message(nil), do: nil
+
+  defp post_message(msg) do
+    GenServer.call(__MODULE__, {:post_message, msg})
   end
 
   defp schedule_work do
     Process.send_after(self(), :work, 120_000)
   end
 
-  def main() do
+  def run() do
     baseUrl = "https://acrnm.com"
     IO.puts("#{DateTime.utc_now()} - Fetching html from #{baseUrl}")
     {:ok, %{body: body}} = Mojito.get(baseUrl)
@@ -43,35 +60,27 @@ defmodule Dripdrop.Crawl do
         max_concurrency: 10,
         ordered: false
       )
+      |> Enum.filter(&match?({:ok, _}, &1))
       |> Enum.map(fn {:ok, val} -> val end)
       |> transpose
       |> build_product_releases_msg
       |> build_sku_restocks_msg
 
-    unless is_nil(product_release_msg) do
-      post_discord_message(product_release_msg)
-    end
-
-    unless is_nil(sku_restock_msg) do
-      post_discord_message(sku_restock_msg)
-    end
+    post_message(product_release_msg)
+    post_message(sku_restock_msg)
 
     IO.puts("#{DateTime.utc_now()} - Finished crawling #{baseUrl}")
   end
 
   def crawl_product(path, base) do
-    case Mojito.get(base <> path) do
-      {:ok, %{body: body}} ->
-        {body, path}
-        |> parse_product_info
-        |> get_or_insert_product
-        |> get_or_insert_skus
-        |> update_missing_skus_not_in_stock
-        |> build_stock_update_msg
+    {:ok, %{body: body}} = Mojito.get(base <> path)
 
-      {:error, _reason} ->
-        {nil, nil}
-    end
+    {body, path}
+    |> parse_product_info
+    |> get_or_insert_product
+    |> get_or_insert_skus
+    |> update_missing_skus_not_in_stock
+    |> build_stock_update_msg
   end
 
   defp parse_product_info({body, path}) do
@@ -271,13 +280,5 @@ defmodule Dripdrop.Crawl do
       end
 
     [release_msg, restock_msg]
-  end
-
-  defp post_discord_message(msg) do
-    Mojito.post(
-      "https://discordapp.com/api/webhooks" <> Application.get_env(:dripdrop, :webhook),
-      [{"content-type", "application/json"}],
-      Jason.encode!(%{"content" => msg})
-    )
   end
 end
